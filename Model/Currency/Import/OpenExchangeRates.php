@@ -52,7 +52,7 @@ class OpenExchangeRates extends \Magento\Directory\Model\Currency\Import\Abstrac
 
         try {
         	// check if Latest JSON is already Exist
-        	$latestJson = $this->directory_list->getPath('cache') ."/openexchange.json";
+        	$latestJson = $this->directory_list->getPath('cache') ."/openexchange_".$currencyFrom.".json";
         	$renew = true;
         	if(file_exists($latestJson)){
 				$latestJsonTimestamp = filectime($latestJson);
@@ -61,17 +61,20 @@ class OpenExchangeRates extends \Magento\Directory\Model\Currency\Import\Abstrac
 					$renew = false;
 					$currData = file_get_contents($latestJson);
 				}
-			}        	
+			}        
+	
         	if($renew)
         	{
-        		
-        		$currData = file_get_contents($url);
+        		$currData = @file_get_contents($url);
         		file_put_contents($latestJson , $currData);
         	}
         	
             $allCurrencies = json_decode($currData);
             return (double)$allCurrencies->rates->$currencyTo;
         } catch (\Exception $e) {
+        	if(!$currData){
+	        	$this->_messages[] = __('kindly check your APP ID, openexchange servers are sending 403 forbidden');
+        	}
             if (!isset($allCurrencies->rates->$currencyTo)) {
                 $this->_messages[] = __('Currency rate is not available for %1.', $currencyTo);
             } else {
